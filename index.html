@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>書体変換ツール</title>
+
+  <meta
+    name="description"
+    content="好きな書体で文字をデザインし、背景透過PNGとして保存できる無料ツールです。"
+  >
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Kaisei+Decol:wght@400;500;700&family=M+PLUS+1p:wght@400;500;700;800;900&family=Montserrat:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@400;500;700;900&family=Oswald:wght@400;500;700&family=Playfair+Display:wght@400;500;700;800&family=Train+One&family=WDXL+Lubrifont+JP+N&family=Yuji+Boku&family=Yuji+Mai&family=Yuji+Syuku&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    :root {
+      --background: #f7f8fa;
+      --surface: #ffffff;
+      --text: #252833;
+      --muted: #777d89;
+      --border: #e4e7ec;
+      --primary: #343a46;
+      --primary-hover: #20242d;
+      --selected: #edf1f7;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: "Noto Sans JP", sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .header {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 22px 24px;
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 50px;
+    }
+
+    .section-title {
+      margin: 0 0 15px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .editor {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .text-input {
+      display: block;
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    .text-input:focus {
+      border-color: #8d99ad;
+    }
+
+    .preview-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 25px 0 12px;
+    }
+
+    .preview-title .section-title {
+      margin: 0;
+    }
+
+    .preview-note {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+      padding: 24px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+
+      background-color: #fff;
+      background-image:
+        linear-gradient(45deg, #e9ebef 25%, transparent 25%),
+        linear-gradient(-45deg, #e9ebef 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e9ebef 75%),
+        linear-gradient(-45deg, transparent 75%, #e9ebef 75%);
+      background-size: 20px 20px;
+      background-position:
+        0 0,
+        0 10px,
+        10px -10px,
+        -10px 0;
+    }
+
+    #previewText {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      text-align: center;
+      white-space: pre-wrap;
+      line-height: 1.45;
+      font-size: 52px;
+      font-family: "Yuji Syuku", serif;
+      color: #252833;
+    }
+
+    .settings {
+      display: grid;
+      gap: 22px;
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .color-input {
+      width: 48px;
+      height: 42px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .color-value {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .selected-font {
+      padding: 13px;
+      border-radius: 9px;
+      background: var(--selected);
+    }
+
+    .selected-font-label {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .selected-font-name {
+      margin-top: 5px;
+      font-size: 15px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .download-button {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 9px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      transition: background 0.15s ease;
+    }
+
+    .download-button:hover {
+      background: var(--primary-hover);
+    }
+
+    .help-text {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .font-section {
+      margin-top: 30px;
+    }
+
+    .font-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .font-heading .section-title {
+      margin: 0;
+    }
+
+    .font-count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 17px;
+    }
+
+    .category-button {
+      padding: 8px 13px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      font-size: 12px;
+      transition: 0.15s ease;
+    }
+
+    .category-button:hover {
+      background: #f0f2f6;
+    }
+
+    .category-button.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .font-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .font-card {
+      min-width: 0;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: #fff;
+      color: var(--text);
+      text-align: left;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .font-card:hover {
+      border-color: #aeb6c4;
+      background: #fafbfc;
+    }
+
+    .font-card.selected {
+      border: 2px solid var(--primary);
+      padding: 14px;
+      background: #f5f7fa;
+    }
+
+    .font-card-name {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .font-card-sample {
+      display: block;
+      min-height: 45px;
+      overflow-wrap: anywhere;
+      font-size: 28px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .empty-message {
+      grid-column: 1 / -1;
+      padding: 28px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .footer {
+      padding: 20px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    @media (max-width: 800px) {
+      .editor {
+        grid-template-columns: 1fr;
+      }
+
+      .settings {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+      }
+
+      .settings .download-area {
+        grid-column: 1 / -1;
+      }
+
+      .font-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header {
+        padding: 18px;
+      }
+
+      .container {
+        padding: 20px 12px 35px;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .settings {
+        grid-template-columns: 1fr;
+      }
+
+      .settings .download-area {
+        grid-column: auto;
+      }
+
+      .preview {
+        min-height: 210px;
+        padding: 16px;
+      }
+
+      #previewText {
+        font-size: 40px;
+      }
+
+      .font-grid {
+        gap: 8px;
+      }
+
+      .font-card {
+        padding: 11px;
+      }
+
+      .font-card.selected {
+        padding: 10px;
+      }
+
+      .font-card-sample {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1 class="logo">書体変換ツール</h1>
+      <p class="subtitle">
+        フォントを選択後、背景透過PNGとして保存できます。
+      </p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="editor">
+      <div class="panel">
+        <label class="field-label" for="textInput">
+          表示する文字
+        </label>
+
+        <input
+          id="textInput"
+          class="text-input"
+          type="text"
+          value="フォントを選択"
+          maxlength="100"
+          placeholder="文字を入力してください"
+          autocomplete="off"
+        >
+
+        <div class="preview-title">
+          <h2 class="section-title">プレビュー</h2>
+          <span class="preview-note">市松模様＝透明部分</span>
+        </div>
+
+        <div class="preview">
+          <div id="previewText">フォントを選択</div>
+        </div>
+      </div>
+
+      <aside class="panel settings">
+        <div>
+          <label class="field-label" for="colorInput">
+            ダウンロード
+          </label>
+
+          <div class="color-row">
+            <input
+              id="colorInput"
+              class="color-input"
+              type="color"
+              value="#252833"
+            >
+
+            <span id="colorValue" class="color-value">#252833</span>
+          </div>
+        </div>
+
+        <div class="selected-font">
+          <div class="selected-font-label">選択中の書体</div>
+          <div id="selectedFontName" class="selected-font-name">
+            Yuji Syuku
+          </div>
+        </div>
+
+        <div class="download-area">
+          <button id="downloadButton" class="download-button" type="button">
+            PNG画像を保存
+          </button>
+
+          <p class="help-text">
+            背景は透明になります。<br>
+            保存した画像はGoogleドキュメントなどに貼り付けて使えます。
+          </p>
+
+          <p id="statusMessage" class="help-text" role="status"></p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="font-section">
+      <div class="font-heading">
+        <h2 class="section-title">フォントを選択</h2>
+        <span id="fontCount" class="font-count"></span>
+      </div>
+
+      <div class="categories" id="categories">
+        <button class="category-button active" data-category="all" type="button">
+          すべて
+        </button>
+        <button class="category-button" data-category="brush" type="button">
+          筆文字
+        </button>
+        <button class="category-button" data-category="gothic" type="button">
+          ゴシック
+        </button>
+        <button class="category-button" data-category="mincho" type="button">
+          明朝
+        </button>
+        <button class="category-button" data-category="design" type="button">
+          デザイン
+        </button>
+        <button class="category-button" data-category="english" type="button">
+          英字向け
+        </button>
+      </div>
+
+      <div id="fontGrid" class="font-grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Google Fontsを使用しています。
+  </footer>
+
+  <script>
+    "use strict";
+
+    /*
+     * フォント一覧
+     *
+     * 今回追加した書体：
+     * - Train One
+     * - WDXL Lubrifont JP N
+     */
+
+    const fonts = [
+      {
+        name: "Yuji Syuku",
+        family: "'Yuji Syuku', serif",
+        category: "brush",
+        weight: 400
+      },
+      {
+        name: "Yuji Boku",
+        family: "'Yuji Boku', serif",
+        category: "brush",
+        weight: 400
+      },
+      {
+        name: "Yuji Mai",
+        family: "'Yuji Mai', serif",
+        category: "brush",
+        weight: 400
+      },
+      {
+        name: "Kaisei Decol",
+        family: "'Kaisei Decol', serif",
+        category: "mincho",
+        weight: 700
+      },
+      {
+        name: "Noto Serif JP",
+        family: "'Noto Serif JP', serif",
+        category: "mincho",
+        weight: 700
+      },
+      {
+        name: "Noto Sans JP",
+        family: "'Noto Sans JP', sans-serif",
+        category: "gothic",
+        weight: 700
+      },
+      {
+        name: "M PLUS 1p",
+        family: "'M PLUS 1p', sans-serif",
+        category: "gothic",
+        weight: 800
+      },
+      {
+        name: "Zen Maru Gothic",
+        family: "'Zen Maru Gothic', sans-serif",
+        category: "gothic",
+        weight: 700
+      },
+      {
+        name: "DotGothic16",
+        family: "'DotGothic16', sans-serif",
+        category: "design",
+        weight: 400
+      },
+      {
+        name: "Train One",
+        family: "'Train One', cursive",
+        category: "design",
+        weight: 400
+      },
+      {
+        name: "WDXL Lubrifont JP N",
+        family: "'WDXL Lubrifont JP N', sans-serif",
+        category: "design",
+        weight: 400
+      },
+      {
+        name: "Montserrat",
+        family: "'Montserrat', sans-serif",
+        category: "english",
+        weight: 800
+      },
+      {
+        name: "Oswald",
+        family: "'Oswald', sans-serif",
+        category: "english",
+        weight: 700
+      },
+      {
+        name: "Playfair Display",
+        family: "'Playfair Display', serif",
+        category: "english",
+        weight: 700
+      }
+    ];
+
+    const categoryNames = {
+      all: "すべて",
+      brush: "筆文字",
+      gothic: "ゴシック",
+      mincho: "明朝",
+      design: "デザイン",
+      english: "英字向け"
+    };
+
+    const textInput = document.getElementById("textInput");
+    const previewText = document.getElementById("previewText");
+    const colorInput = document.getElementById("colorInput");
+    const colorValue = document.getElementById("colorValue");
+    const selectedFontName = document.getElementById("selectedFontName");
+    const fontGrid = document.getElementById("fontGrid");
+    const fontCount = document.getElementById("fontCount");
+    const downloadButton = document.getElementById("downloadButton");
+    const statusMessage = document.getElementById("statusMessage");
+
+    let selectedFont = fonts[0];
+    let activeCategory = "all";
+
+    /*
+     * プレビュー更新
+     */
+    function updatePreview() {
+      const text = textInput.value || " ";
+
+      previewText.textContent = text;
+      previewText.style.fontFamily = selectedFont.family;
+      previewText.style.fontWeight = selectedFont.weight;
+      previewText.style.color = colorInput.value;
+
+      colorValue.textContent = colorInput.value.toUpperCase();
+      selectedFontName.textContent = selectedFont.name;
+    }
+
+    /*
+     * フォントカードを作成
+     */
+    function renderFonts() {
+      fontGrid.innerHTML = "";
+
+      const visibleFonts = fonts.filter((font) => {
+        return activeCategory === "all"
+          || font.category === activeCategory;
+      });
+
+      fontCount.textContent = `${visibleFonts.length}書体`;
+
+      if (visibleFonts.length === 0) {
+        const message = document.createElement("div");
+        message.className = "empty-message";
+        message.textContent = "このカテゴリに書体はありません。";
+        fontGrid.appendChild(message);
+        return;
+      }
+
+      visibleFonts.forEach((font) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "font-card";
+
+        if (font.name === selectedFont.name) {
+          card.classList.add("selected");
+        }
+
+        const name = document.createElement("span");
+        name.className = "font-card-name";
+        name.textContent = font.name;
+
+        const sample = document.createElement("span");
+        sample.className = "font-card-sample";
+        sample.textContent = textInput.value || "フォントを選択";
+        sample.style.fontFamily = font.family;
+        sample.style.fontWeight = font.weight;
+
+        card.appendChild(name);
+        card.appendChild(sample);
+
+        card.addEventListener("click", () => {
+          selectedFont = font;
+
+          updatePreview();
+          renderFonts();
+
+          statusMessage.textContent =
+            `「${font.name}」を選択しました。`;
+        });
+
+        fontGrid.appendChild(card);
+      });
+    }
+
+    /*
+     * カテゴリ切り替え
+     */
+    document.querySelectorAll(".category-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        activeCategory = button.dataset.category;
+
+        document.querySelectorAll(".category-button").forEach((item) => {
+          item.classList.toggle("active", item === button);
+        });
+
+        renderFonts();
+      });
+    });
+
+    /*
+     * 文字入力・色変更
+     */
+    textInput.addEventListener("input", () => {
+      updatePreview();
+      renderFonts();
+    });
+
+    colorInput.addEventListener("input", () => {
+      updatePreview();
+    });
+
+    /*
+     * PNG保存
+     *
+     * 背景を塗りつぶさずに描画するため、
+     * 出力画像の背景は透明になります。
+     */
+    async function downloadPNG() {
+      const text = textInput.value;
+
+      if (!text.trim()) {
+        statusMessage.textContent = "保存する文字を入力してください。";
+        textInput.focus();
+        return;
+      }
+
+      downloadButton.disabled = true;
+      downloadButton.textContent = "画像を作成中…";
+      statusMessage.textContent = "";
+
+      try {
+        /*
+         * Webフォントの読み込み完了を待つ
+         */
+        await document.fonts.load(
+          `${selectedFont.weight} 48px ${selectedFont.family}`
+        );
+
+        await document.fonts.ready;
+
+        /*
+         * Canvasを作成
+         */
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          throw new Error("Canvasを利用できません。");
+        }
+
+        const padding = 40;
+        const maxFontSize = 160;
+        const minFontSize = 12;
+
+        canvas.width = 1200;
+        canvas.height = 400;
+
+        let fontSize = maxFontSize;
+
+        ctx.font =
+          `${selectedFont.weight} ${fontSize}px ${selectedFont.family}`;
+
+        /*
+         * 文字が横幅に収まるまでサイズを調整
+         */
+        const maxTextWidth = canvas.width - padding * 2;
+
+        while (
+          ctx.measureText(text).width > maxTextWidth
+          && fontSize > minFontSize
+        ) {
+          fontSize -= 2;
+
+          ctx.font =
+            `${selectedFont.weight} ${fontSize}px ${selectedFont.family}`;
+        }
+
+        const metrics = ctx.measureText(text);
+
+        const actualHeight =
+          (metrics.actualBoundingBoxAscent || fontSize * 0.8)
+          + (metrics.actualBoundingBoxDescent || fontSize * 0.2);
+
+        /*
+         * 文字の大きさに合わせてキャンバスを調整
+         */
+        const textWidth = Math.ceil(metrics.width);
+
+        canvas.width = Math.max(
+          100,
+          Math.min(1200, textWidth + padding * 2)
+        );
+
+        canvas.height = Math.max(
+          100,
+          Math.ceil(actualHeight + padding * 2)
+        );
+
+        /*
+         * キャンバスのサイズ変更後に設定し直す
+         */
+        ctx.font =
+          `${selectedFont.weight} ${fontSize}px ${selectedFont.family}`;
+
+        ctx.fillStyle = colorInput.value;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        /*
+         * 背景は描画しない＝透明
+         */
+        ctx.fillText(
+          text,
+          canvas.width / 2,
+          canvas.height / 2
+        );
+
+        /*
+         * PNGとして保存
+         */
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            statusMessage.textContent =
+              "画像の作成に失敗しました。もう一度お試しください。";
+
+            downloadButton.disabled = false;
+            downloadButton.textContent = "PNG画像を保存";
+            return;
+          }
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "font-design.png";
+
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          URL.revokeObjectURL(url);
+
+          statusMessage.textContent =
+            "背景透過PNGを保存しました！";
+
+          downloadButton.disabled = false;
+          downloadButton.textContent = "PNG画像を保存";
+        }, "image/png");
+
+      } catch (error) {
+        console.error("PNG保存エラー:", error);
+
+        statusMessage.textContent =
+          "保存に失敗しました。通信環境やフォントの読み込みを確認してください。";
+
+        downloadButton.disabled = false;
+        downloadButton.textContent = "PNG画像を保存";
+      }
+    }
+
+    downloadButton.addEventListener("click", downloadPNG);
+
+    /*
+     * 初期表示
+     */
+    updatePreview();
+    renderFonts();
+  </script>
+</body>
+</html>
